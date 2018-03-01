@@ -5,11 +5,12 @@ import com.wix.e2e.http.RequestFilter
 
 trait MethodFilters {
 
-  def whenGet: RequestFilter = whenMethod(HttpMethods.GET)
-  def whenPost: RequestFilter = whenMethod(HttpMethods.POST)
-  def whenDelete: RequestFilter = whenMethod(HttpMethods.DELETE)
-  def whenPut: RequestFilter = whenMethod(HttpMethods.PUT)
-  def whenPatch: RequestFilter = whenMethod(HttpMethods.PATCH)
+  def methodIsGet: RequestFilter = methodIs(HttpMethods.GET)
+  def methodIsPost: RequestFilter = methodIs(HttpMethods.POST)
+  def methodIsDelete: RequestFilter = methodIs(HttpMethods.DELETE)
+  def methodIsPut: RequestFilter = methodIs(HttpMethods.PUT)
+  def methodIsPatch: RequestFilter = methodIs(HttpMethods.PATCH)
 
-  def whenMethod(method: HttpMethod): RequestFilter = { _.method == method }
+  def methodIs(method: HttpMethod): RequestFilter = { _.method == method }
+
 }

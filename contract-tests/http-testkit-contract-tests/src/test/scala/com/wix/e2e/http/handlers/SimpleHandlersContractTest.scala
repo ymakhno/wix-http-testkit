@@ -26,13 +26,13 @@ class SimpleHandlersContractTest extends Spec {
     "allow to return string response on any request" in new ctx {
       private val validStringResponse = "Hello world"
 
-      server.appendAll(always respondOk validStringResponse)
+      server.appendAll(respondOk(validStringResponse))
 
       get("/") must beSuccessfulWith(validStringResponse)
     }
 
     "allow to apply path matcher on handlers" in new ctx {
-      server.appendAll(whenPathIs("/hello/world") respondOk())
+      server.appendAll(respondOk() when pathIs("/hello/world") )
 
       get("/hello/world") must beSuccessful
       get("/hello/world/") must beSuccessful
@@ -41,7 +41,7 @@ class SimpleHandlersContractTest extends Spec {
     }
 
     "support wildcard in path matcher" in new ctx {
-      server.appendAll(whenPathIs("*/world/*") respondOk())
+      server.appendAll(respondOk() when pathIs("*/world/*"))
 
       get("/hello/world/!") must beSuccessful
       get("/bye-bye/world/!") must beSuccessful
@@ -49,13 +49,13 @@ class SimpleHandlersContractTest extends Spec {
     }
 
     "allow to apply query param matcher on handlers" in new ctx {
-      server.appendAll(whenParamsContain("a" -> "b", "c" -> "d") respondOk())
+      server.appendAll(respondOk() when paramsContain("a" -> "b", "c" -> "d"))
       get("/", but = withParams("a" -> "b", "c" -> "d", "x" -> "y")) must beSuccessful
       get("/", but = withParam("c" -> "d")) must beNotFound
     }
 
     "allow to apply both path matcher and query param matcher on handlers" in new ctx {
-      server.appendAll(whenParamsContain("a" -> "b", "c" -> "d") and whenPathIs("ololo") respondOk())
+      server.appendAll(respondOk() when paramsContain("a" -> "b", "c" -> "d") and pathIs("ololo"))
 
       get("/ololo", but = withParams("a" -> "b", "c" -> "d", "x" -> "y")) must beSuccessful
       get("/", but = withParams("a" -> "b", "c" -> "d", "x" -> "y")) must beNotFound
@@ -65,27 +65,27 @@ class SimpleHandlersContractTest extends Spec {
     "allow to respond with case class" in new ctx {
       val response = SimpleEntityResponse("privet!")
 
-      server.appendAll(always respondOk response)
+      server.appendAll(respondOk(response))
 
       get("/arbitrary/path") must beSuccessfulWith(response)
     }
 
     "allow to match via body" in new ctx {
-      server.appendAll(whenBodyIs(privetResponse) respondOk())
+      server.appendAll(respondOk() when bodyIs(privetResponse))
 
       post("/arbitrary/path", but = withPayload(privetResponse)) must beSuccessful
       post("/arbitrary/path", but = withPayload(pakaResponse)) must beNotFound
     }
 
     "allow to match via body with matcher" in new ctx {
-      server.appendAll(whenBodyMatches(be_===(privetResponse)) respondOk())
+      server.appendAll(respondOk() when bodyMatches(be_===(privetResponse)))
 
       post("/arbitrary/path", but = withPayload(privetResponse)) must beSuccessful
       post("/arbitrary/path", but = withPayload(pakaResponse)) must beNotFound
     }
 
     "allow to match via http method" in new ctx {
-      server.appendAll(whenGet or whenDelete respondOk())
+      server.appendAll(respondOk() when (methodIsGet or methodIsDelete))
 
       get("/arbitrary/path") must beSuccessful
       delete("/arbitrary/path") must beSuccessful
@@ -95,18 +95,20 @@ class SimpleHandlersContractTest extends Spec {
     }
 
     "allow to match via headers" in new ctx {
-      server.appendAll(whenHeadersContain("a" -> "b", "c" -> "d") respondOk())
+      server.appendAll(respondOk() when headersContain("a" -> "b", "c" -> "d"))
 
       get("/", but = withHeaders("a" -> "b", "c" -> "d", "x" -> "y")) must beSuccessful
       get("/", but = withHeader("c" -> "d")) must beNotFound
     }
 
     "allow to apply all together" in new ctx {
-      val handler = whenPost and
-        whenPathIs("/users/*") and
-        whenParamsContain("a" -> "x") and
-        whenHeadersContain("b" -> "y") and
-        whenBodyMatches(beTypedEqualTo(privetResponse)) respondOk()
+      val handler = respondOk() when
+                      methodIsPost and
+                      pathIs("/users/*") and
+                      paramsContain("a" -> "x") and
+                      headersContain("b" -> "y") and
+                      bodyMatches(be_===(privetResponse))
+
       server.appendAll(handler)
 
       post("/users/1", but = withPayload(privetResponse) and withParam("a" -> "x") and withHeader("b" -> "y")) must beSuccessful

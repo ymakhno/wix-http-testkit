@@ -1,32 +1,21 @@
 package com.wix.e2e.http.filters
 
-import com.wix.e2e.http.{HttpRequest, HttpResponse, RequestFilter, RequestHandler}
+import com.wix.e2e.http.RequestFilter
+
 
 trait Filters extends BodyFilters
               with PathFilters
               with QueryParamFilters
               with MethodFilters
               with HeaderFilters
-              with Responses {
+              with Handlers {
 
-  val always: RequestFilter = _ => true
-
-  implicit def `RequestFilter -> FilterOps`(filter: RequestFilter): FilterOps =
-    new FilterOps(filter)
-
+  implicit def `RequestFilter -> FilterOps`(filter: RequestFilter) = new FilterOps(filter)
 }
 
 object Filters extends Filters
 
 class FilterOps(val thisFilter: RequestFilter) extends AnyVal {
-
-  def respond(response: HttpResponse): RequestHandler =
-    { case rq: HttpRequest if thisFilter(rq) => response }
-
-  def and(thatFilter: RequestFilter): RequestFilter =
-    (rq: HttpRequest) => thisFilter(rq) && thatFilter(rq)
-
-  def or(thatMatcher: RequestFilter): RequestFilter =
-    (rq: HttpRequest) => thisFilter(rq) || thatMatcher(rq)
-
+  def and(thatFilter: RequestFilter): RequestFilter = { rq => thisFilter(rq) && thatFilter(rq) }
+  def or(thatFilter: RequestFilter): RequestFilter = { rq => thisFilter(rq) || thatFilter(rq) }
 }
